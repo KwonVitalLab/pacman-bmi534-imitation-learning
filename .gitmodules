@@ -1,0 +1,3 @@
+[submodule "Pacman"]
+	path = Pacman
+	url = git@github.com:BaggerFast/Pacman.git

@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behavior Cloning: Hands-On with Pac-Man</title>
+
+    <!-- Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+            border-radius: 15px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        header h1 {
+            font-size: 3em;
+            color: #42affa;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        header p {
+            font-size: 1.3em;
+            color: #a0a0a0;
+            margin-top: 10px;
+        }
+
+        .session-info {
+            background: rgba(255, 165, 0, 0.1);
+            border-left: 4px solid #ffa500;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+
+        section {
+            background: rgba(26, 26, 46, 0.8);
+            border-radius: 10px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            color: #42affa;
+            font-size: 2.2em;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #42affa;
+        }
+
+        h3 {
+            color: #ffa500;
+            font-size: 1.6em;
+            margin: 30px 0 15px 0;
+        }
+
+        h4 {
+            color: #4CAF50;
+            font-size: 1.3em;
+            margin: 20px 0 10px 0;
+        }
+
+        .timer-badge {
+            display: inline-block;
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 15px;
+            vertical-align: middle;
+        }
+
+        .workflow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 40px 0;
+            gap: 20px;
+        }
+
+        .workflow-box {
+            background: #1a1a1a;
+            border: 2px solid #42affa;
+            padding: 20px 30px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 180px;
+            font-size: 1.1em;
+        }
+
+        .workflow-box small {
+            display: block;
+            color: #888;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .arrow {
+            color: #ffa500;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .phase {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .phase.record { border-left: 5px solid #42affa; }
+        .phase.train { border-left: 5px solid #ffa500; }
+        .phase.inference { border-left: 5px solid #4CAF50; }
+
+        .phase h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .phase-content {
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 2;
+        }
+
+        .phase-content div {
+            margin: 5px 0;
+        }
+
+        .phase-content .indent {
+            padding-left: 40px;
+        }
+
+        .phase-content .comment {
+            color: #888;
+        }
+
+        .phase-content .file {
+            color: #42affa;
+        }
+
+        .phase-content .output {
+            color: #4CAF50;
+        }
+
+        .phase-content .command {
+            color: #ffa500;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            .workflow {
+                flex-direction: column;
+            }
+
+            .arrow {
+                transform: rotate(90deg);
+            }
+        }
+
+        .file-list {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .file-ref {
+            background: #2d2d2d;
+            padding: 4px 10px;
+            border-radius: 4px;
+            color: #42affa;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .info-box {
+            background: rgba(66, 175, 250, 0.1);
+            border-left: 4px solid #42affa;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+
+        .info-box.warning {
+            background: rgba(255, 107, 107, 0.1);
+            border-left-color: #ff6b6b;
+        }
+
+        .info-box.success {
+            background: rgba(76, 175, 80, 0.1);
+            border-left-color: #4CAF50;
+        }
+
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        pre {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid #333;
+        }
+
+        code {
+            background: #2d2d2d;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #42affa;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            font-size: 0.95em;
+            color: inherit;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border-top: 3px solid #42affa;
+        }
+
+        .network-diagram {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.05em;
+            line-height: 2;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .checklist {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .checklist li {
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .checklist li:before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            color: #ffa500;
+            font-size: 1.3em;
+        }
+
+        .task-section {
+            background: rgba(66, 175, 250, 0.05);
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .discussion-item {
+            background: #1a1a1a;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 3px solid #ffa500;
+        }
+
+        .discussion-item strong {
+            color: #ffa500;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        th {
+            background: #1a1a1a;
+            color: #42affa;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: rgba(66, 175, 250, 0.05);
+        }
+
+        .nav-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #42affa;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(66, 175, 250, 0.4);
+            transition: all 0.3s;
+            text-decoration: none;
+            font-size: 1.5em;
+            z-index: 1000;
+        }
+
+        .nav-top:hover {
+            background: #5dbfff;
+            transform: translateY(-5px);
+        }
+
+        strong {
+            color: #ffa500;
+        }
+
+        .highlight-success {
+            color: #4CAF50;
+        }
+
+        .highlight-warning {
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Behavior Cloning</h1>
+            <h2 style="color: #ffa500; margin-top: 0;">Hands-On with Pac-Man</h2>
+            <p><strong>Today's Goal:</strong> Build an AI that learns to play Pac-Man by watching <em>you</em> play</p>
+            <div class="session-info">
+                <strong>📅 Session Duration:</strong> 45 minutes<br>
+                <strong>👥 Audience:</strong> Graduate students<br>
+                <strong>💡 Learning:</strong> Complete ML pipeline from data collection → deployment
+            </div>
+        </header>
+
+        <!-- Setup Section -->
+        <section id="setup">
+            <h2>🔧 Setup Instructions <span class="timer-badge">⏱️ 5 minutes</span></h2>
+
+            <h3>Step 1: Clone Repository</h3>
+            <pre><code class="bash">git clone git@github.com:rahul-islam/pacman-bmi534-imitation-learning.git pacman-bmi534-imitation-learning
+cd pacman-bmi534-imitation-learning
+git submodule update --init --recursive
+cd assignment</code></pre>
+
+            <h3>Step 2: Install Dependencies</h3>
+            <pre><code class="bash">pip install -r requirements.txt
+# Installs: torch, numpy, pygame</code></pre>
+
+            <h3>Step 3: Verify Installation</h3>
+            <pre><code class="bash">python run_game.py --mode human
+# Should open Pac-Man game window
+# Use arrow keys or WASD to play</code></pre>
+
+            <div class="info-box warning">
+                <strong>⚠️ Quick Fixes:</strong><br><br>
+                • <strong>Mac M1/M2:</strong> <code>pip install pygame --pre</code><br>
+                • <strong>Torch CPU-only:</strong> <code>pip install torch --index-url https://download.pytorch.org/whl/cpu</code><br>
+                • <strong>Import errors:</strong> Ensure you're in <code>assignment/</code> directory
+            </div>
+        </section>
+
+        <!-- Project Overview -->
+        <section id="overview">
+            <h2>📋 Project Overview <span class="timer-badge">⏱️ 5 minutes</span></h2>
+
+            <h3>The Behavior Cloning Pipeline</h3>
+            <div class="workflow">
+                <div class="workflow-box">
+                    👤 Human Plays<br>
+                    <small>(You control Pac-Man)</small>
+                </div>
+                <span class="arrow">→</span>
+
+                <div class="workflow-box">
+                    💾 Record Data<br>
+                    <small>(State, Action) pairs</small>
+                </div>
+                <span class="arrow">→</span>
+
+                <div class="workflow-box">
+                    🧠 Train Model<br>
+                    <small>Neural Network</small>
+                </div>
+                <span class="arrow">→</span>
+
+                <div class="workflow-box">
+                    🤖 AI Plays<br>
+                    <small>(Imitates you!)</small>
+                </div>
+            </div>
+
+            <h3>What You'll Build:</h3>
+            <ul>
+                <li><strong>Input:</strong> Game state (70 features: positions, distances, danger signals)</li>
+                <li><strong>Output:</strong> Action prediction (UP, DOWN, LEFT, RIGHT, NONE)</li>
+                <li><strong>Model:</strong> 3-layer MLP classifier (~11K parameters)</li>
+                <li><strong>Result:</strong> AI that mimics your playing style</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>💡 Key Concept:</strong> This is <strong>supervised learning</strong> - not reinforcement learning.
+                No rewards, no exploration - just imitation. The AI learns the distribution P(action | state) from your gameplay.
+            </div>
+        </section>
+
+        <!-- Code Architecture -->
+        <section id="architecture">
+            <h2>🏗️ Code Architecture <span class="timer-badge">⏱️ 5 minutes</span></h2>
+
+            <h3>Your Workflow</h3>
+
+            <div class="phase record">
+                <h4 style="color: #42affa;">1️⃣ RECORD PHASE</h4>
+                <div class="phase-content">
+                    <div><span class="command">$</span> python run_game.py --mode record</div>
+                    <div class="indent">↓ <span class="comment">(extracts state features)</span></div>
+                    <div class="indent"><span class="file">data_recorder.py</span> → extract_state_features()</div>
+                    <div class="indent">↓ <span class="comment">(saves to disk)</span></div>
+                    <div class="indent"><span class="output">trajectories/trajectory_*.pkl</span></div>
+                </div>
+            </div>
+
+            <div class="phase train">
+                <h4 style="color: #ffa500;">2️⃣ TRAINING PHASE</h4>
+                <div class="phase-content">
+                    <div><span class="command">$</span> python train.py</div>
+                    <div class="indent">↓ <span class="comment">(loads trajectories)</span></div>
+                    <div class="indent"><span class="file">dataset.py</span> → Creates PyTorch Dataset</div>
+                    <div class="indent">↓ <span class="comment">(defines network)</span></div>
+                    <div class="indent"><span class="file">model.py</span> → 3-layer MLP architecture</div>
+                    <div class="indent">↓ <span class="comment">(trains with cross-entropy + Adam)</span></div>
+                    <div class="indent"><span class="file">train.py</span> → Training loop</div>
+                    <div class="indent">↓ <span class="comment">(saves best model)</span></div>
+                    <div class="indent"><span class="output">models/best_pacman_model.pth</span></div>
+                </div>
+            </div>
+
+            <div class="phase inference">
+                <h4 style="color: #4CAF50;">3️⃣ INFERENCE PHASE</h4>
+                <div class="phase-content">
+                    <div><span class="command">$</span> python run_game.py --mode ai</div>
+                    <div class="indent">↓ <span class="comment">(loads trained model)</span></div>
+                    <div class="indent"><span class="file">auto_play.py</span> → AIPlayer.predict_action()</div>
+                    <div class="indent">↓ <span class="comment">(injects keyboard input)</span></div>
+                    <div class="indent"><span class="output">🎮 AI plays Pac-Man!</span></div>
+                </div>
+            </div>
+
+            <h3>8 Key Files (All in <code>assignment/</code> directory)</h3>
+            <div class="two-column">
+                <div class="file-list">
+                    <strong style="color: #42affa;">Configuration:</strong><br>
+                    • <span class="file-ref">config.py</span> - All hyperparameters<br><br>
+
+                    <strong style="color: #42affa;">Data Collection:</strong><br>
+                    • <span class="file-ref">data_recorder.py</span> - Feature extraction<br>
+                    • <span class="file-ref">run_game.py</span> - Game integration<br>
+                </div>
+                <div class="file-list">
+                    <strong style="color: #42affa;">Model & Training:</strong><br>
+                    • <span class="file-ref">dataset.py</span> - PyTorch Dataset<br>
+                    • <span class="file-ref">model.py</span> - Neural network<br>
+                    • <span class="file-ref">train.py</span> - Training loop<br><br>
+
+                    <strong style="color: #42affa;">Deployment:</strong><br>
+                    • <span class="file-ref">auto_play.py</span> - AI inference<br>
+                </div>
+            </div>
+        </section>
+
+        <!-- State & Model -->
+        <section id="state-model">
+            <h2>🧠 What Does the AI "See"? <span class="timer-badge">⏱️ 5 minutes</span></h2>
+
+            <div class="two-column">
+                <div>
+                    <h3>State Representation: 70 Features</h3>
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <strong style="color: #42affa;">Basic (28)</strong><br>
+                            Pac-Man pos/dir, 4 ghost pos/states, nearest seed
+                        </div>
+                        <div class="feature-card">
+                            <strong style="color: #42affa;">Distance (9)</strong><br>
+                            To each ghost, energizer, wall adjacency
+                        </div>
+                        <div class="feature-card">
+                            <strong style="color: #42affa;">Strategic (22)</strong><br>
+                            Lives, frightened count, valid moves
+                        </div>
+                        <div class="feature-card">
+                            <strong style="color: #42affa;">Advanced (11)</strong><br>
+                            Seed density, ghost prediction, trap detection
+                        </div>
+                    </div>
+
+                    <h3>Neural Network Architecture</h3>
+                    <div class="network-diagram">
+                        Input Layer (70)<br>
+                        ↓<br>
+                        Linear(70 → 128)<br>
+                        ↓<br>
+                        ReLU → Dropout(0.2)<br>
+                        ↓<br>
+                        Linear(128 → 64)<br>
+                        ↓<br>
+                        ReLU → Dropout(0.2)<br>
+                        ↓<br>
+                        Linear(64 → 5)<br>
+                        ↓<br>
+                        <strong style="color: #4CAF50;">Output (5 actions)</strong><br><br>
+                        <span style="color: #ffa500;">~11,269 parameters</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h3>Training Configuration</h3>
+                    <table>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td>Loss Function</td>
+                            <td>Cross-Entropy</td>
+                        </tr>
+                        <tr>
+                            <td>Optimizer</td>
+                            <td>Adam (lr=0.001)</td>
+                        </tr>
+                        <tr>
+                            <td>Batch Size</td>
+                            <td>64</td>
+                        </tr>
+                        <tr>
+                            <td>Train/Val Split</td>
+                            <td>80% / 20%</td>
+                        </tr>
+                        <tr>
+                            <td>Early Stopping</td>
+                            <td>Patience = 10 epochs</td>
+                        </tr>
+                    </table>
+
+                    <div class="info-box">
+                        <strong>💡 Feature Engineering:</strong><br><br>
+                        <strong>Why 70 features?</strong><br>
+                        • Position data: 18 dims<br>
+                        • One-hot encoding: 20 dims<br>
+                        • Distances: 9 dims<br>
+                        • Strategic: 12 dims<br>
+                        • Advanced: 11 dims<br><br>
+                        <strong style="color: #ffa500;">Key insight:</strong> Engineered features >>> raw pixels for behavior cloning
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Hands-On Activity -->
+        <section id="hands-on">
+            <h2>👨‍💻 Hands-On Activity <span class="timer-badge">⏱️ 25 minutes</span></h2>
+
+            <div class="task-section">
+                <h3>Task 1: Record Demonstrations <span class="timer-badge">10 min</span></h3>
+                <ul class="checklist">
+                    <li><strong>Run:</strong> <code>python run_game.py --mode record</code></li>
+                    <li><strong>Play 5-10 games</strong> (~2 min each)</li>
+                    <li><strong>Strategy tips:</strong>
+                        <ul style="list-style: disc; margin-top: 10px;">
+                            <li>Vary your paths - don't repeat same route</li>
+                            <li>Show aggressive (chase ghosts) AND defensive (avoid) play</li>
+                            <li>Demonstrate energizer usage (eat ghosts when blue)</li>
+                            <li>Try to survive as long as possible each game</li>
+                        </ul>
+                    </li>
+                    <li><strong>Files saved to:</strong> <code>trajectories/trajectory_*.pkl</code></li>
+                    <li><strong>Verify:</strong> <code>python dataset.py</code> (shows # frames, action distribution)</li>
+                </ul>
+            </div>
+
+            <div class="task-section">
+                <h3>Task 2: Train Model <span class="timer-badge">10 min</span></h3>
+                <ul class="checklist">
+                    <li><strong>Run:</strong> <code>python train.py</code></li>
+                    <li><strong>Watch training:</strong> Validation accuracy should improve over epochs</li>
+                    <li><strong>Target:</strong> 60-85% accuracy (depends on data quality)</li>
+                    <li><strong>Training time:</strong> 5-15 minutes on CPU</li>
+                    <li><strong>Model saved to:</strong> <code>models/best_pacman_model.pth</code></li>
+                </ul>
+
+                <div class="info-box warning">
+                    <strong>⏰ Time Management Tip:</strong> Training taking long? Continue to Task 3 while it runs.
+                    Use instructor's pre-trained model if needed.
+                </div>
+            </div>
+
+            <div class="task-section">
+                <h3>Task 3: Watch AI Play! <span class="timer-badge">5 min</span></h3>
+                <ul class="checklist">
+                    <li><strong>Run:</strong> <code>python run_game.py --mode ai</code></li>
+                    <li><strong>Observe:</strong> Does it mimic your strategy?</li>
+                    <li><strong>Note failures:</strong> Where does it struggle? Why?</li>
+                    <li><strong>Think about:</strong> What states did the AI encounter that weren't in training data?</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Results & Discussion -->
+        <section id="results">
+            <h2>🎯 Expected Results & Discussion</h2>
+
+            <h3>What to Expect:</h3>
+            <div class="two-column">
+                <div class="info-box success">
+                    <strong class="highlight-success">✓ Good Signs:</strong>
+                    <ul>
+                        <li>60-85% validation accuracy</li>
+                        <li>AI follows general strategy</li>
+                        <li>Avoids ghosts when close</li>
+                        <li>Collects seeds efficiently</li>
+                        <li>Uses energizers sometimes</li>
+                    </ul>
+                </div>
+                <div class="info-box warning">
+                    <strong class="highlight-warning">⚠️ Common Issues:</strong>
+                    <ul>
+                        <li>Gets stuck in corners/loops</li>
+                        <li>Runs into ghosts in novel situations</li>
+                        <li>Ignores energizers (if rare in training)</li>
+                        <li>Jittery movement (action oscillation)</li>
+                        <li>Low accuracy on rare actions</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Discussion Questions:</h3>
+
+            <div class="discussion-item">
+                <strong>Why does the AI fail in certain situations?</strong>
+                → <strong>Distribution shift:</strong> The AI encounters states that weren't present in the training data.
+                During training, it only learned from states YOU encountered. When it makes mistakes and reaches new states,
+                it has no experience to draw from.
+            </div>
+
+            <div class="discussion-item">
+                <strong>How could we improve performance?</strong>
+                → <strong>Multiple approaches:</strong>
+                <ul style="margin-top: 10px;">
+                    <li>Record more diverse demonstrations (different strategies, paths)</li>
+                    <li>Data augmentation (mirror game states horizontally)</li>
+                    <li>DAgger algorithm (Dataset Aggregation) - iteratively collect data from AI's mistakes</li>
+                    <li>Ensemble methods (train multiple models)</li>
+                </ul>
+            </div>
+
+            <div class="discussion-item">
+                <strong>Why not just use reinforcement learning?</strong>
+                → <strong>Trade-offs:</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>BC advantages:</strong> Simpler, faster to train, no reward engineering, leverages expert demonstrations</li>
+                    <li><strong>BC limitations:</strong> Limited by expert performance, suffers from distribution shift, can't exceed expert</li>
+                    <li><strong>RL advantages:</strong> Can exceed expert, explores new strategies, handles novel situations better</li>
+                    <li><strong>RL challenges:</strong> Requires reward design, much slower training, needs lots of exploration</li>
+                </ul>
+            </div>
+
+            <div class="discussion-item">
+                <strong>Where is behavior cloning used in practice?</strong>
+                → <strong>Real-world applications:</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>Autonomous driving:</strong> Learning from human drivers (Waymo, Tesla)</li>
+                    <li><strong>Robot manipulation:</strong> Learning from teleoperation demonstrations</li>
+                    <li><strong>Game AI:</strong> Learning from player logs and esports replays</li>
+                    <li><strong>LLM alignment:</strong> Learning from human feedback demonstrations (RLHF)</li>
+                    <li><strong>Surgical robotics:</strong> Learning from expert surgeon demonstrations</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <strong>📚 Extend Your Learning:</strong><br><br>
+                Try implementing <strong>DAgger (Dataset Aggregation)</strong>:<br>
+                1. Train initial model on expert demonstrations<br>
+                2. Let AI play and record states it encounters<br>
+                3. Have expert label those states with correct actions<br>
+                4. Add to dataset and retrain<br>
+                5. Repeat until performance plateaus<br><br>
+                See <code>INSTRUCTOR_GUIDE.md</code> for more extension ideas.
+            </div>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section id="troubleshooting">
+            <h2>🔧 Troubleshooting Guide</h2>
+
+            <div class="two-column">
+                <div>
+                    <h3>Setup Issues</h3>
+                    <table>
+                        <tr>
+                            <th>Problem</th>
+                            <th>Solution</th>
+                        </tr>
+                        <tr>
+                            <td>Game won't open</td>
+                            <td><code>pip install pygame --upgrade</code></td>
+                        </tr>
+                        <tr>
+                            <td>Submodule missing</td>
+                            <td><code>git submodule update --init --recursive</code></td>
+                        </tr>
+                        <tr>
+                            <td>Import errors</td>
+                            <td>Check you're in <code>assignment/</code> directory<br>Verify Python 3.8+</td>
+                        </tr>
+                    </table>
+
+                    <h3 style="margin-top: 30px;">Recording Issues</h3>
+                    <table>
+                        <tr>
+                            <th>Problem</th>
+                            <th>Solution</th>
+                        </tr>
+                        <tr>
+                            <td>No trajectory files</td>
+                            <td>Play until game ends completely (lose all lives)</td>
+                        </tr>
+                        <tr>
+                            <td>Dataset shows 0 frames</td>
+                            <td>Need at least one complete game<br>Check file permissions</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div>
+                    <h3>Training Issues</h3>
+                    <table>
+                        <tr>
+                            <th>Problem</th>
+                            <th>Solution</th>
+                        </tr>
+                        <tr>
+                            <td>Low accuracy (&lt;50%)</td>
+                            <td>• Record 10+ games<br>
+                                • Check action distribution<br>
+                                • Enable class weighting in config</td>
+                        </tr>
+                        <tr>
+                            <td>Training very slow</td>
+                            <td>• Expected: 5-15 min on CPU<br>
+                                • Reduce epochs in config<br>
+                                • Use smaller batch size</td>
+                        </tr>
+                        <tr>
+                            <td>Overfitting</td>
+                            <td>• Increase dropout (0.3-0.4)<br>
+                                • Record more diverse gameplay</td>
+                        </tr>
+                    </table>
+
+                    <h3 style="margin-top: 30px;">AI Play Issues</h3>
+                    <table>
+                        <tr>
+                            <th>Problem</th>
+                            <th>Solution</th>
+                        </tr>
+                        <tr>
+                            <td>AI does nothing</td>
+                            <td>Class imbalance - record more active gameplay</td>
+                        </tr>
+                        <tr>
+                            <td>Jittery movement</td>
+                            <td>Normal for low-confidence predictions<br>Sliding window helps (already implemented)</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <section style="background: linear-gradient(135deg, #0f3460 0%, #16213e 100%); text-align: center;">
+            <h2>🎉 You Did It!</h2>
+            <p style="font-size: 1.2em; margin: 20px 0;">
+                You just built a complete machine learning pipeline in 45 minutes!
+            </p>
+            <p style="color: #a0a0a0; margin-top: 20px;">
+                From data collection → feature engineering → model training → deployment
+            </p>
+            <div style="margin-top: 30px; padding: 20px; background: rgba(66, 175, 250, 0.1); border-radius: 8px;">
+                <strong>What you learned:</strong><br><br>
+                ✓ Behavior cloning fundamentals<br>
+                ✓ Feature engineering for game AI<br>
+                ✓ PyTorch model training<br>
+                ✓ Distribution shift problem<br>
+                ✓ Real-world ML pipeline
+            </div>
+        </section>
+    </div>
+
+    <a href="#" class="nav-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">↑</a>
+
+    <!-- Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>
