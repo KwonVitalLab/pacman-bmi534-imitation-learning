@@ -44,7 +44,7 @@ This is a practical introduction to **behavior cloning** (imitation learning), w
 
 ```bash
 # Clone repository (if not already done)
-git clone git@github.com:rahul-islam/pacman-bmi534-imitation-learning.git pacman-bmi534-imitation-learning
+git clone git@github.com:KwonVitalLab/pacman-bmi534-imitation-learning.git pacman-bmi534-imitation-learning
 cd pacman-bmi534-imitation-learning
 git submodule update --init --recursive
 
