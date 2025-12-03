@@ -1,6 +1,6 @@
 # Generated data and models
-trajectories/*.pkl
-models/*.pth
+# trajectories/*.pkl
+# models/*.pth
 
 # Python
 __pycache__/
@@ -29,8 +29,8 @@ ENV/
 Thumbs.db
 
 # Keep directories but not contents
-!trajectories/.gitkeep
-!models/.gitkeep
+# !trajectories/.gitkeep
+# !models/.gitkeep
 
-*.pkl
-*.pth
+# *.pkl
+# *.pth
